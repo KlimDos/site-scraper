@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  app:
+    #build .
+    image: klimdos/scraper:0.0.1-alpha
+    volumes:
+      - /home/sasha/site-scraper/src/config.py:/app/config.py
+    links:
+      - worker
+  worker:
+    image: selenium/standalone-firefox:4.1.2-20220217
+    ports:
+      - 4444:4444
