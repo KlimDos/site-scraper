@@ -1,6 +1,7 @@
 .vscode/
 *config.py
 *.DS_Store
+*state
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
