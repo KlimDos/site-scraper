@@ -3,9 +3,6 @@ import telegram
 import requests
 import dateparser
 
-import os.path
-from os import path
-
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
