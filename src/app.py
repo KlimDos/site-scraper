@@ -89,7 +89,7 @@ def make_appointment(
     email=config.apt_email,
     phone=config.apt_phone,
     driver_license=config.apt_driverlicense,
-    birth_date=config.apt_birth_date
+    birth_date=config.apt_birth_date,
     url=config.url
     ):
 
