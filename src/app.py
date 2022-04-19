@@ -21,7 +21,10 @@ def find_by_mvc(URL: str) -> list:
 
     for mvc_code in config.mvc_to_process:
 
-        drv.get(f"{URL}{mvc_code}")
+        if config.apt_type == 15:
+            mvc_code = mvc_code - 81
+
+        drv.get(f"{URL}/{config.apt_type}/{mvc_code}")
 
         mvc_name = drv.find_elements(
             By.CLASS_NAME,"nav-item")[3].text.split(" - ")[0]
@@ -40,11 +43,11 @@ def find_by_mvc(URL: str) -> list:
             time_slot = drv.find_elements(
                 By.CLASS_NAME,"control-label")[1].text.replace("Time of Appointment for", "")
 
-            message = f"{counter}. {time_slot}<a href=\"https://telegov.njportal.com/njmvc/AppointmentWizard/19/{mvc_code}\">{mvc_name}</a>"
+            message = f"{counter}. {time_slot}<a href=\"{URL}/{config.apt_type}/{mvc_code}\">{mvc_name}</a>"
             print(message)
 
             if config.apt_threshold >= dateparser.parse(time_slot):
-               make_appointment(mvc_code, drv)
+                make_appointment(config.apt_type, mvc_code, drv)
 
             results.append(message)
 
@@ -78,6 +81,7 @@ def send_pic_tg(image, chat_id=config.tg_group, token=config.tg_token):
         print(f"Cant send. Error: \n {e}")
 
 def make_appointment(
+    apt_type,
     mvc_code,
     driver,
     firstName=config.apt_firstName,
@@ -85,20 +89,28 @@ def make_appointment(
     email=config.apt_email,
     phone=config.apt_phone,
     driver_license=config.apt_driverlicense,
-    make_appointment_url=config.make_appointment_url
+    birth_date=config.apt_birth_date
+    url=config.url
     ):
 
-    driver.get(f"{make_appointment_url}{mvc_code}")
+    driver.get(f"{url}{mvc_code}")
     
     driver.find_elements(By.CLASS_NAME, "availableTimeslot")[0].click()
     driver.find_element(By.ID, "firstName").send_keys(firstName)
     driver.find_element(By.ID, "lastName").send_keys(lastName)
     driver.find_element(By.ID, "email").send_keys(email)
     driver.find_element(By.ID, "phone").send_keys(phone)
-    driver.find_element(By.ID, "driverLicense").send_keys(driver_license)
-    driver.find_element(By.ID, "test").send_keys("Auto")
+
+    if apt_type == 19:
+        driver.find_element(By.ID, "driverLicense").send_keys(driver_license)
+        driver.find_element(By.ID, "test").send_keys("Auto")
+    elif apt_type == 15:
+        driver.find_element(By.ID, "permitType").send_keys("Purchase an auto examination permit (Class D) (ages 17+)")
+        driver.find_element(By.ID, "birthDate").send_keys(birth_date)
+
     driver.find_element(By.NAME, "Attest").click()
     driver.find_element(By.CLASS_NAME, "g-recaptcha").click()
+
     sleep(10)
     driver.save_screenshot("book_result.png")
     send_pic_tg("book_result.png")

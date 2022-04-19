@@ -8,6 +8,6 @@ COPY src/requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY src/app.py .
+COPY src/app.py src/config.py ./
 
 ENTRYPOINT ["sh", "-c", "python app.py"]

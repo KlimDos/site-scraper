@@ -7,11 +7,13 @@ services:
     #image: klimdos/scraper:0.0.1-alpha
     restart: on-failure
     volumes:
-      - /home/sasha/site-scraper/src/config.py:/app/config.py
+      #- /home/sasha/site-scraper/src/config.py:/app/config.py
+      - /Users/aalimov/Desktop/git/public/site-scraper/src/config.py:/app/config.py
     links:
       - worker
   worker:
     image: selenium/standalone-firefox:4.1.2-20220217
+    restart: on-failure
     networks:
       - selenium
     ports:
