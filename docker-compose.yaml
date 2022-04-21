@@ -15,7 +15,7 @@ services:
     image: selenium/standalone-firefox:4.1.2-20220217
     restart: on-failure
     environment:
-      - SE_NODE_SESSION_TIMEOUT=10
+      - SE_NODE_SESSION_TIMEOUT=30
     networks:
       - selenium
     ports:
