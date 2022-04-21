@@ -115,7 +115,7 @@ def make_appointment(
     url=config.url
     ):
 
-    driver.get(f"{url}{mvc_code}")
+    driver.get(f"{url}{apt_type}/{mvc_code}")
 
     driver.find_elements(By.CLASS_NAME, "availableTimeslot")[0].click()
     driver.find_element(By.ID, "firstName").send_keys(firstName)
