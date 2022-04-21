@@ -60,8 +60,11 @@ def find_by_mvc(URL: str) -> list:
             time_slot = drv.find_elements(
                 By.CLASS_NAME, "control-label")[1].text.replace("Time of Appointment for", "")
 
-            message = f"{counter}. {time_slot}<a href=\"{URL}/{config.apt_type}/{mvc_code}\">{mvc_name}</a>"
+            message = f"{counter}. {time_slot}<a href=\"{URL}{config.apt_type}/{mvc_code}\">{mvc_name}</a>"
             logger.info(message)
+
+            logger.info(f"Appointment threshold: {config.apt_threshold}")
+            logger.info(f"Closes avalable appointment: {dateparser.parse(time_slot)}")
 
             if config.apt_threshold >= dateparser.parse(time_slot):
                 make_appointment(config.apt_type, mvc_code, drv)
@@ -135,6 +138,8 @@ def make_appointment(
 
     sleep(10)
     driver.save_screenshot("book_result.png")
+    logger.info("Appointment has been scheduled")
+    send_tg("!!! Appointment has been scheduled !!!")
     send_pic_tg("book_result.png")
 
 
@@ -168,7 +173,7 @@ formatter = logging.Formatter(
     '[%(asctime)s]:[%(module)s]:[%(lineno)s]:[%(levelname)s] %(message)s', '%d-%b-%y %H:%M:%S')
 streamHandler.setFormatter(formatter)
 logger.addHandler(streamHandler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 logger.info("App starting")
 
