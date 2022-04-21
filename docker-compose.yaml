@@ -16,6 +16,9 @@ services:
     restart: on-failure
     environment:
       - SE_NODE_SESSION_TIMEOUT=30
+      - SCREEN_WIDTH=1400
+      - SCREEN_HEIGHT=1400 
+      - SCREEN_DEPTH=24
     networks:
       - selenium
     ports:

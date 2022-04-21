@@ -26,7 +26,11 @@ def find_by_mvc(URL: str) -> list:
 
     while True:
         try:
-            drv = webdriver.Remote(command_executor=get_worker_url())
+            firefox_options = webdriver.FirefoxOptions()
+            firefox_options.add_argument("--width=1400")
+            firefox_options.add_argument("--height=1400")
+            drv = webdriver.Remote(
+                command_executor=get_worker_url(), options=firefox_options)
         except Exception:
             logger.error(f"An error has occurred during the session creation:\n {Exception}")
             logger.warning("Application is running in idle mode")
@@ -176,6 +180,7 @@ logger.addHandler(streamHandler)
 logger.setLevel(logging.INFO)
 
 logger.info("App starting")
+
 
 while True:
 
