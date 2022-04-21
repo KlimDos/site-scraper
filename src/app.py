@@ -1,6 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+MVC Bot
+"""
+
+from distutils.debug import DEBUG
+import sys
 import config # private data set
 import telegram
 import requests
+import logging
 import dateparser
 
 from time import sleep
@@ -12,12 +22,19 @@ def find_by_mvc(URL: str) -> list:
     results = []
     counter = 0
 
-    print(f"create remote session...")
+    logger.info("Creating remote session...")
 
-    drv = webdriver.Remote(
-        command_executor=get_worker_url())
+    while True:
+        try:
+            drv = webdriver.Remote(command_executor=get_worker_url())
+        except Exception:
+            logger.error(f"An error has occurred during the session creation:\n {Exception}")
+            logger.warning("Application is running in idle mode")
+            sleep(30)
+            continue
+        break
 
-    print(f"session created")
+    logger.info("session created")
 
     for mvc_code in config.mvc_to_process:
 
@@ -27,24 +44,24 @@ def find_by_mvc(URL: str) -> list:
         drv.get(f"{URL}/{config.apt_type}/{mvc_code}")
 
         mvc_name = drv.find_elements(
-            By.CLASS_NAME,"nav-item")[3].text.split(" - ")[0]
+            By.CLASS_NAME, "nav-item")[3].text.split(" - ")[0]
 
         mvc_name = f"({mvc_code}) {mvc_name}"
 
         try:
-            drv.find_element(By.CLASS_NAME,"availableTimeslot")
+            drv.find_element(By.CLASS_NAME, "availableTimeslot")
         except Exception:
-            print(f"({mvc_code}) {mvc_name} has no appointments")
-            #uncomment in case you want to include in a result mvc with no appointments available 
-            #results.append(f"{mvc_name} has no appointments")
+            logger.info(f"({mvc_code}) {mvc_name} has no appointments")
+            # uncomment in case you want to include in a result mvc with no appointments available 
+            # results.append(f"{mvc_name} has no appointments")
             continue
         else:
             counter += 1
             time_slot = drv.find_elements(
-                By.CLASS_NAME,"control-label")[1].text.replace("Time of Appointment for", "")
+                By.CLASS_NAME, "control-label")[1].text.replace("Time of Appointment for", "")
 
             message = f"{counter}. {time_slot}<a href=\"{URL}/{config.apt_type}/{mvc_code}\">{mvc_name}</a>"
-            print(message)
+            logger.info(message)
 
             if config.apt_threshold >= dateparser.parse(time_slot):
                 make_appointment(config.apt_type, mvc_code, drv)
@@ -54,10 +71,12 @@ def find_by_mvc(URL: str) -> list:
     drv.quit()
     return results
 
+
 def write_state(text):
     f = open("state", "w")
     f.write(text)
     f.close()
+
 
 def read_state():
     try:
@@ -66,19 +85,22 @@ def read_state():
         return f"File doesnt exist"
     return f.read()
 
+
 def send_tg(text, chat_id=config.tg_group, token=config.tg_token):
     bot = telegram.Bot(token=token)
     try:
-        bot.send_message(chat_id=chat_id, text=text,parse_mode="HTML")
+        bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
     except Exception as e:
-        print(f"Cant send. Error: \n {e}")
+        logger.error(f"Cant send. Error: \n {e}")
+
 
 def send_pic_tg(image, chat_id=config.tg_group, token=config.tg_token):
     bot = telegram.Bot(token=token)
     try:
         bot.send_photo(chat_id=chat_id, photo=open(image, 'rb'))
     except Exception as e:
-        print(f"Cant send. Error: \n {e}")
+        logger.error(f"Cant send. Error: \n {e}")
+
 
 def make_appointment(
     apt_type,
@@ -94,7 +116,7 @@ def make_appointment(
     ):
 
     driver.get(f"{url}{mvc_code}")
-    
+
     driver.find_elements(By.CLASS_NAME, "availableTimeslot")[0].click()
     driver.find_element(By.ID, "firstName").send_keys(firstName)
     driver.find_element(By.ID, "lastName").send_keys(lastName)
@@ -115,33 +137,53 @@ def make_appointment(
     driver.save_screenshot("book_result.png")
     send_pic_tg("book_result.png")
 
-def get_worker_url(worker_candidates=config.worker_candidates):
 
-    for worker in worker_candidates:
-        try:
-            get = requests.get(f"http://{worker}:4444")
-            if get.status_code == 200:
-                return(f"http://{worker}:4444")
-        except Exception:
-                print(f"{worker} not a worker")
+def get_worker_url(worker_candidates=config.worker_candidates):
+    result = ""
+    while not result:
+        logger.warning("Looking for selenium worker")
+        for worker in worker_candidates:
+            try:
+                get = requests.get(f"http://{worker}:4444")
+                if get.status_code == 200:
+                    logger.warning(f"Worker found: http://{worker}:4444")
+                    result = (f"http://{worker}:4444")
+                    return result
+            except Exception:
+                logger.warning(f"{worker} not a worker")
                 continue
-        return "no workers found"
+        logger.warning("No available selenium workers has been found")
+        logger.warning("Application is running in idle mode")
+
+        sleep(5)
+
+    return 1
 
 ##### MAIN FUNC ########
 
-print(f"App starting")
+
+logger = logging.getLogger()
+streamHandler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter(
+    '[%(asctime)s]:[%(module)s]:[%(lineno)s]:[%(levelname)s] %(message)s', '%d-%b-%y %H:%M:%S')
+streamHandler.setFormatter(formatter)
+logger.addHandler(streamHandler)
+logger.setLevel(logging.DEBUG)
+
+logger.info("App starting")
 
 while True:
+
     appointments_available = find_by_mvc(config.url)
 
     # Convert list into html
     html_msg = "\n".join([str(appointment) for appointment in appointments_available])
-    
+
     if not html_msg:
         html_msg = "no appointments available atm"
     
     if html_msg == read_state():
-        print("no changes since last check")
+        logger.warning("no changes since last check")
     else:
         send_tg(html_msg)
 
