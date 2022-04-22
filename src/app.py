@@ -5,15 +5,15 @@
 MVC Bot
 """
 
-from distutils.debug import DEBUG
 import sys
 import config # private data set
 import telegram
 import requests
 import logging
-import dateparser
+import dateparser as dp
 
 from time import sleep
+import datetime as d
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -70,7 +70,7 @@ def find_by_mvc(URL: str) -> list:
             logger.info(f"Appointment threshold: {config.apt_threshold}")
             logger.info(f"Closes avalable appointment: {dateparser.parse(time_slot)}")
 
-            if config.apt_threshold >= dateparser.parse(time_slot):
+            if config.apt_threshold >= dp.parse(time_slot) >= d.datetime.now() + d.timedelta(days=1):
                 make_appointment(config.apt_type, mvc_code, drv)
 
             results.append(message)
