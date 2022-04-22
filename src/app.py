@@ -68,7 +68,7 @@ def find_by_mvc(URL: str) -> list:
             logger.info(message)
 
             logger.info(f"Appointment threshold: {config.apt_threshold}")
-            logger.info(f"Closes avalable appointment: {dateparser.parse(time_slot)}")
+            logger.info(f"Closes avalable appointment: {dp.parse(time_slot)}")
 
             if config.apt_threshold >= dp.parse(time_slot) >= d.datetime.now() + d.timedelta(days=1):
                 make_appointment(config.apt_type, mvc_code, drv)
