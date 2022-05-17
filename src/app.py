@@ -13,7 +13,7 @@ import logging
 import dateparser as dp
 
 from time import sleep
-import datetime as d
+# import datetime as d
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -70,7 +70,8 @@ def find_by_mvc(URL: str) -> list:
             logger.info(f"Appointment threshold: {config.apt_threshold}")
             logger.info(f"Closes avalable appointment: {dp.parse(time_slot)}")
 
-            if config.apt_threshold >= dp.parse(time_slot) >= d.datetime.now() + d.timedelta(days=1):
+            #if config.apt_threshold >= dp.parse(time_slot) >= d.datetime.now() + d.timedelta(days=1):
+            if config.apt_threshold_from >= dp.parse(time_slot) >= config.apt_threshold_to:
                 make_appointment(config.apt_type, mvc_code, drv)
 
             results.append(message)
